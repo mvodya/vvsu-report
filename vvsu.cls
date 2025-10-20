@@ -1,4 +1,4 @@
-% V 5.13
+% V 5.14
 % Author: Mark Vodyanitskiy (@mvodya) 2024
 % СК-СТО-ТР-04-1.005-2015
 % Основано на требовании к оформлению текстовой части выпускных
@@ -46,8 +46,8 @@
 pdftitle={\@title},
 pdflang={ru−RU},
 pdfpublisher={Владивостокский Государственный Университет},
-pdfproducer={LaTeX VVSU V5.13},
-pdfcreator={LaTeX VVSU V5.13},
+pdfproducer={LaTeX VVSU V5.14},
+pdfcreator={LaTeX VVSU V5.14},
 pdfauthor={\@author}
 }
 
@@ -127,6 +127,7 @@ pdfauthor={\@author}
   \centering
   }{
   \begin{minipage}{0.95\linewidth} % Ограничиваем максимальную ширину (фикс бага отступами для подписей)
+  \linespread{1}\selectfont % Одиночный интервал для подписей
   \addtocounter{cnttotalfigures}{1}\caption{#1}
   \label{#3}
   \end{minipage}
@@ -187,11 +188,16 @@ pdfauthor={\@author}
 \renewcommand{\footrulewidth}{0pt}
 \topmargin=-1.29cm % 1.25cm - 2.54cm (1in)
 \headsep=12pt
-\fancyhead[R]{\setcounter{reallastpagenumber}{\numexpr\thepage+1\relax}
-\thepage}
+% Фикс редкого бага с гулянием шрифтов у нумерации страниц - явно указываем размер и шрифт
+\fancyhead[R]{%
+  \setcounter{reallastpagenumber}{\numexpr\thepage+1\relax}%
+  {\normalfont\setmainfont{Times New Roman}\fontsize{12}{12}\selectfont\thepage}%
+}
 \fancypagestyle{plain}{%
    \fancyhf{}%
-   \fancyhead[R]{\thepage}%
+   \fancyhead[R]{%
+     {\normalfont\setmainfont{Times New Roman}\fontsize{12}{12}\selectfont\thepage}%
+   }%
 }
 % Вывод общего количества страниц
 \newcommand{\totalpages}{\TotalValue{reallastpagenumber}}
