@@ -1,4 +1,4 @@
-% V 5.15
+% V 5.16
 % Author: Mark Vodyanitskiy (@mvodya) 2026
 % СК-СТО-ТР-04-1.005-2015
 % Основано на требовании к оформлению текстовой части выпускных
@@ -47,8 +47,8 @@
 pdftitle={\@title},
 pdflang={ru−RU},
 pdfpublisher={Владивостокский Государственный Университет},
-pdfproducer={LaTeX VVSU V5.15},
-pdfcreator={LaTeX VVSU V5.15},
+pdfproducer={LaTeX VVSU V5.16},
+pdfcreator={LaTeX VVSU V5.16},
 pdfauthor={\@author}
 }
 
@@ -571,7 +571,7 @@ pdfauthor={\@author}
   \protected@edef\@svsec{\@seccntformat{section}\relax}%
   \addcontentsline{toc}{section}{\protect\numberline{\csname thesection\endcsname}#1}%
   \settowidth{\sectionnumwidth}{\@svsec}%
-  \sbox{\sectionboxtext}{\parbox[t]{\linewidth-\sectionnumwidth-\parindent}{\fontsize{14}{14}\linespread{1}\setmainfont{Arial}\selectfont#1}}%
+  \sbox{\sectionboxtext}{\parbox[t]{\linewidth-\sectionnumwidth-\parindent}{\fontsize{14}{14}\linespread{1}\setmainfont{Arial}\selectfont\nohyphens{#1}}}%
   {\fontsize{14}{14}\linespread{1}\setmainfont{Arial}\selectfont \@svsec \usebox\sectionboxtext}%
   \par\nobreak\global\global\booltrue{sectionmarker}%
   \ifdim\the\dimexpr\dp\sectionboxtext+\ht\sectionboxtext\relax > \dimexpr14pt\relax \addvspace{12pt}\else\addvspace{6pt}\fi%
@@ -584,7 +584,7 @@ pdfauthor={\@author}
   \protected@edef\@svsec{\@seccntformat{subsection}\relax}%
   \addcontentsline{toc}{subsection}{\protect\numberline{\csname thesubsection\endcsname}#1}%
   \settowidth{\sectionnumwidth}{\@svsec}%
-  \sbox{\sectionboxtext}{\parbox[t]{\linewidth-\sectionnumwidth-\parindent}{\fontsize{13}{13}\linespread{1}\setmainfont{Arial}\selectfont#1}}%
+  \sbox{\sectionboxtext}{\parbox[t]{\linewidth-\sectionnumwidth-\parindent}{\fontsize{13}{13}\linespread{1}\setmainfont{Arial}\selectfont\nohyphens{#1}}}%
   {\fontsize{13}{13}\linespread{1}\setmainfont{Arial}\selectfont \@svsec \usebox\sectionboxtext}%
   \par\nobreak%
   \ifdim\the\dimexpr\dp\sectionboxtext+\ht\sectionboxtext\relax > \dimexpr13pt\relax \addvspace{12pt}\fi%
@@ -596,7 +596,7 @@ pdfauthor={\@author}
   \protected@edef\@svsec{\@seccntformat{subsubsection}\relax}%
   \addcontentsline{toc}{subsubsection}{\protect\numberline{\csname thesubsubsection\endcsname}#1}%
   \settowidth{\sectionnumwidth}{\@svsec}%
-  \sbox{\sectionboxtext}{\parbox[t]{\linewidth-\sectionnumwidth-\parindent}{\fontsize{12}{12}\linespread{1}\setmainfont{Times New Roman}\selectfont\bfseries#1}}%
+  \sbox{\sectionboxtext}{\parbox[t]{\linewidth-\sectionnumwidth-\parindent}{\fontsize{12}{12}\linespread{1}\setmainfont{Times New Roman}\selectfont\bfseries\nohyphens{#1}}}%
   {\fontsize{12}{12}\linespread{1}\setmainfont{Times New Roman}\selectfont\bfseries \@svsec \usebox\sectionboxtext}%
   \par\nobreak%
   \ifdim\the\dimexpr\dp\sectionboxtext+\ht\sectionboxtext\relax > \dimexpr12pt\relax \addvspace{12pt}\fi%
