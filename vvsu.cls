@@ -1,5 +1,5 @@
-% V 5.14
-% Author: Mark Vodyanitskiy (@mvodya) 2024
+% V 5.15
+% Author: Mark Vodyanitskiy (@mvodya) 2026
 % СК-СТО-ТР-04-1.005-2015
 % Основано на требовании к оформлению текстовой части выпускных
 % квалификационных работ, курсовых работ (проектов), рефератов,
@@ -29,6 +29,7 @@
 \RequirePackage{fontspec}
 \RequirePackage{indentfirst}
 \RequirePackage{hyphenat} % Автоматические переносы слов (СТО 4.1.5)
+\RequirePackage{microtype}
 \setmainfont{Times New Roman}
 \renewcommand{\baselinestretch}{1.5}
 \setlength{\parindent}{1.25cm}
@@ -46,8 +47,8 @@
 pdftitle={\@title},
 pdflang={ru−RU},
 pdfpublisher={Владивостокский Государственный Университет},
-pdfproducer={LaTeX VVSU V5.14},
-pdfcreator={LaTeX VVSU V5.14},
+pdfproducer={LaTeX VVSU V5.15},
+pdfcreator={LaTeX VVSU V5.15},
 pdfauthor={\@author}
 }
 
