@@ -1,4 +1,4 @@
-% V 5.16
+% V 5.17
 % Author: Mark Vodyanitskiy (@mvodya) 2026
 % СК-СТО-ТР-04-1.005-2015
 % Основано на требовании к оформлению текстовой части выпускных
@@ -15,7 +15,7 @@
 \RequirePackage{etoolbox}
 \RequirePackage{xparse}
 \RequirePackage{float}
-\RequirePackage{hyperref}
+\RequirePackage[hidelinks]{hyperref}
 \RequirePackage{hyperxmp}
 \RequirePackage{pdfpages}
 \RequirePackage{xassoccnt}
@@ -47,8 +47,8 @@
 pdftitle={\@title},
 pdflang={ru−RU},
 pdfpublisher={Владивостокский Государственный Университет},
-pdfproducer={LaTeX VVSU V5.16},
-pdfcreator={LaTeX VVSU V5.16},
+pdfproducer={LaTeX VVSU V5.17},
+pdfcreator={LaTeX VVSU V5.17},
 pdfauthor={\@author}
 }
 
