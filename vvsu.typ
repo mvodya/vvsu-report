@@ -224,3 +224,72 @@
   align(center)[Владивосток #year]
   pagebreak()
 }
+
+// Страницы, не включенные в содержание
+// Задание, Аннотация, Реферат
+#let front-matter-page(
+  title: none,
+  body
+) = context {
+  // Сохраняем страницу для пропуска нумерации
+  let saved-page = counter(page).get().first()
+
+  // На новой странице
+  pagebreak(weak: true)
+  // Без нумерации
+  set page(numbering: none)
+
+  // Заголовок страницы
+  if not _is-empty(title) {
+    align(center)[
+      #set par(
+        first-line-indent: 0pt,
+        leading: _msword-leading(1),
+        spacing: 0pt,
+        justify: false,
+      )
+      #text(font: "Arial", size: 14pt, hyphenate: false)[
+        #title
+      ]
+    ]
+    v(6pt)
+  }
+
+  body
+
+  pagebreak()
+  // Восстанавливаем номер страницы для пропуска нумерации
+  counter(page).update(saved-page)
+}
+
+// Страницы, включенные в содержание
+// Введение, Заключение
+#let outline-page(
+  title: none,
+  body
+) = context {
+  // На новой странице
+  pagebreak(weak: true)
+
+  // Заголовок страницы
+  if not _is-empty(title) {
+    align(center)[
+      #set par(
+        first-line-indent: 0pt,
+        leading: _msword-leading(1),
+        spacing: 0pt,
+        justify: false,
+      )
+      #text(font: "Arial", size: 14pt, hyphenate: false)[
+        #title
+      ]
+    ]
+    v(6pt)
+  }
+
+  body
+}
+// Введение
+#let introduction(body) = outline-page(title: [Введение])[#body]
+// Заключение
+#let conclusion(body) = outline-page(title: [Заключение])[#body]
