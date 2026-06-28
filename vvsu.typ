@@ -30,7 +30,9 @@
 #let vvsu-depart-its = [Институт информационных технологий и анализа данных\
 Кафедра информационных технологий и систем]
 
-// Оформление документа
+
+
+//// Оформление документа
 #let vvsu(
   body,
 ) = {
@@ -82,7 +84,7 @@
       )[
         #context {
           // Расчет размера нумерации для выравнивания переноса
-          let prefix = [#h(1.25cm)#counter(heading).display()~]
+          let prefix = if it.numbering == none { [] } else { [#h(1.25cm)#counter(heading).display()~] }
           let prefix-width = measure(prefix).width
           par(
             first-line-indent: 0pt,
@@ -100,7 +102,9 @@
   body
 }
 
-// Титульный лист
+
+
+//// Титульный лист
 #let title-page(
   department: none, // Кафедра в шапке (реквизит 4)
   title: "БЕЗ НАЗВАНИЯ", // Название документа (реквизит 6)
@@ -225,7 +229,9 @@
   pagebreak()
 }
 
-// Страницы, не включенные в содержание
+
+
+//// Страницы, не включенные в содержание
 // Задание, Аннотация, Реферат
 #let front-matter-page(
   title: none,
@@ -262,7 +268,9 @@
   counter(page).update(saved-page)
 }
 
-// Страницы, включенные в содержание
+
+
+//// Страницы, включенные в содержание
 // Введение, Заключение
 #let outline-page(
   title: none,
@@ -281,7 +289,7 @@
         justify: false,
       )
       #text(font: "Arial", size: 14pt, hyphenate: false)[
-        #title
+        #heading(level: 1, numbering: none)[#title]
       ]
     ]
     v(6pt)
@@ -293,3 +301,67 @@
 #let introduction(body) = outline-page(title: [Введение])[#body]
 // Заключение
 #let conclusion(body) = outline-page(title: [Заключение])[#body]
+
+
+
+//// Содержание
+#let toc(title: [Содержание]) = context {
+  // На новой странице
+  pagebreak(weak: true)
+  // Без нумерации
+  set page(numbering: none)
+
+  // Заголовок страницы
+  align(center)[
+    #set par(
+      first-line-indent: 0pt,
+      leading: _msword-leading(1),
+      spacing: 0pt,
+      justify: false,
+    )
+    #text(font: "Arial", size: 14pt, hyphenate: false)[
+      #title
+    ]
+  ]
+  v(6pt)
+
+  // Настройка интервалов
+  set par(
+    first-line-indent: 0pt,
+    leading: _msword-leading(1),
+    spacing: _msword-leading(1.5),
+    justify: false,
+  )
+
+  // Настройка TOC
+  show outline.entry: it => {
+    let level = it.level
+    // Расчет отступа в зависимости от уровня заголовка
+    let indent =  1.25cm * (level - 1)
+    let number = if it.element.numbering == none {
+      []
+    } else {
+      numbering(it.element.numbering, ..counter(heading).at(it.element.location()))
+    }
+    // Префикс заголовка (номер, если есть)
+    let prefix = if number == [] { [] } else { [#number#h(0.25em)] }
+
+    context {
+      // Номер страницы
+      let page = counter(page).at(it.element.location()).first()
+      // Расчет длинны префикса (для отступа)
+      let prefix-width = measure([#h(indent)#prefix]).width
+      par(hanging-indent: prefix-width)[
+        // Номер и заголовок
+        #h(indent)#prefix#link(it.element.location(), it.element.body)
+        // Точки
+        #box(width: 1fr, repeat[.])
+        // Страница
+        #link(it.element.location(), str(page))
+      ]
+    }
+  }
+
+  outline(title: none, indent: auto)
+  pagebreak()
+}
