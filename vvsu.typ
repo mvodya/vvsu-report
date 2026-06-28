@@ -9,7 +9,7 @@
 // Mark Vodyanitskiy (@mvodya) 2026
 
 #let template-name = "vvsu-report"
-#let template-version = version(6, 0, 0)
+#let template-version = version(6, 0)
 
 #let minimum-typst-version = version(0, 14, 0)
 #assert(
@@ -36,6 +36,11 @@
 #let vvsu(
   body,
 ) = {
+  // Добавляем метаданные
+  set document(
+    description: template-name + " / " + str(template-version),
+  )
+
   // Настройки страницы и нумерации страниц
   set page(
     paper: "a4",
@@ -115,6 +120,11 @@
   authors: (), // Список авторов (реквизит 9-14)
   year: datetime.today().year(), // Год выполнения работы (реквизит 15)
 ) = context {
+  // Добавляем метаданные
+  set document(
+    title: title + " " + title2 + " " + title3,
+  )
+
   // Отключаем нумерацию
   set page(numbering: none)
 
