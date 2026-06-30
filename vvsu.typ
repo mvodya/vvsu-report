@@ -85,6 +85,49 @@
 // Нумерация для рисунков
 #let _image-counter = counter("vvsu-image")
 
+// Текущее приложение: none в основной части, буква приложения внутри #appendix
+#let _appendix-state = state("vvsu-appendix", none)
+#let _appendix-counter = counter("vvsu-appendix")
+// Буквы для приложений
+#let _appendix-letters = (
+  "А",
+  "Б",
+  "В",
+  "Г",
+  "Д",
+  "Е",
+  "Ж",
+  "И",
+  "К",
+  "Л",
+  "М",
+  "Н",
+  "П",
+  "Р",
+  "С",
+  "Т",
+  "У",
+  "Ф",
+  "Х",
+  "Ц",
+  "Ш",
+  "Щ",
+  "Э",
+  "Ю",
+  "Я",
+)
+#let _appendix-letter(n) = {
+  if n <= _appendix-letters.len() {
+    _appendix-letters.at(n - 1)
+  } else {
+    str(n - _appendix-letters.len())
+  }
+}
+// Номер с буквой для элементов в приложении
+#let _appendix-number(prefix, number) = if prefix == none { number } else { prefix + "." + number }
+// Номер с буквой в скобочках для формул в приложении
+#let _appendix-equation-numbering(prefix) = n => "(" + prefix + "." + str(n) + ")"
+
 // Оформление рисунка
 #let _image-block(number, caption, source: none, body) = block(above: 12pt + 6pt, below: 12pt + 6pt, breakable: false)[
   #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
@@ -104,7 +147,7 @@
   body,
 ) = context {
   let number-value = _image-counter.get().first() + 1
-  let number = numbering("1", number-value)
+  let number = _appendix-number(_appendix-state.get(), numbering("1", number-value))
 
   _image-block(number, caption, source: source)[
     // Обновляем счетчик и добавляем метаданные для ссылок
@@ -117,6 +160,7 @@
 
 // Нумерация для таблиц
 #let _table-counter = counter("vvsu-table")
+#let _table-range-counter = counter("vvsu-table-range")
 
 // Таблица
 #let figure-table(
@@ -127,13 +171,15 @@
   body,
 ) = context {
   let number-value = _table-counter.get().first() + 1
-  let number = numbering("1", number-value)
-  let start-label = label("vvsu-table-start-" + str(number-value))
+  let number = _appendix-number(_appendix-state.get(), numbering("1", number-value))
+  let range-value = _table-range-counter.get().first() + 1
+  let start-label = label("vvsu-table-start-" + str(range-value))
 
   block(above: 12pt + 6pt, below: 12pt + 6pt, breakable: breakable)[
     #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
     // Обновляем счетчик и добавляем метаданные для ссылок
     #_table-counter.update(number-value)
+    #_table-range-counter.update(range-value)
     #metadata((kind: "vvsu-table", number: number))
     #if tag != none { tag }
     // Метка начала нужна для определения страниц продолжений
@@ -147,7 +193,7 @@
       #body
     ]
     // Метаданные конца нужны для определения последней страницы таблицы
-    #metadata((kind: "vvsu-table-range", number: number, number-value: number-value)) #label("vvsu-table-end-" + str(number-value))
+    #metadata((kind: "vvsu-table-range", number: number, number-value: number-value)) #label("vvsu-table-end-" + str(range-value))
     #if source != none {
       align(left)[
         #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
@@ -166,9 +212,10 @@
   table.cell(colspan: columns-count, inset: 0pt, align: left, stroke: none)[
     #context {
       let number-value = _table-counter.get().first()
-      let number = numbering("1", number-value)
-      let start-label = label("vvsu-table-start-" + str(number-value))
-      let end-label = label("vvsu-table-end-" + str(number-value))
+      let number = _appendix-number(_appendix-state.get(), numbering("1", number-value))
+      let range-value = _table-range-counter.get().first()
+      let start-label = label("vvsu-table-start-" + str(range-value))
+      let end-label = label("vvsu-table-end-" + str(range-value))
       let current-page = counter(page).get().first()
       let start-page = counter(page).at(query(start-label).first().location()).first()
       let end-page = counter(page).at(query(end-label).first().location()).first()
@@ -314,7 +361,10 @@
     if it.caption == none {
       panic("У рисунка должна быть подпись")
     }
-    _image-block(it.counter.display(it.numbering), it.caption.body, body: it.body)
+    context {
+      let number = _appendix-number(_appendix-state.get(), it.counter.display(it.numbering))
+      _image-block(number, it.caption.body, body: it.body)
+    }
   }
 
   // Формулы
@@ -343,7 +393,8 @@
     } else if it.element != none and it.element.func() == figure and it.element.kind == image {
       // Ссылки на рисунки (ванильный figure)
       context {
-        let number = numbering(it.element.numbering, ..it.element.counter.at(it.element.location()))
+        let loc = it.element.location()
+        let number = _appendix-number(_appendix-state.at(loc), numbering(it.element.numbering, ..it.element.counter.at(loc)))
         link(it.target)[#number]
       }
     } else if it.element != none and it.element.func() == metadata and type(it.element.value) == dictionary and "kind" in it.element.value and it.element.value.kind == "vvsu-table" {
@@ -357,6 +408,9 @@
       }
     } else if it.element != none and it.element.func() == metadata and type(it.element.value) == dictionary and "kind" in it.element.value and it.element.value.kind == "vvsu-source" {
       // Ссылки на источники
+      link(it.target)[#it.element.value.number]
+    } else if it.element != none and it.element.func() == metadata and type(it.element.value) == dictionary and "kind" in it.element.value and it.element.value.kind == "vvsu-appendix" {
+      // Ссылки на приложения
       link(it.target)[#it.element.value.number]
     } else {
       // Прочее
@@ -575,8 +629,54 @@
 // Заключение
 #let conclusion(body) = outline-page(title: [Заключение])[#body]
 
-//// Список использованных источников (на основе .bib-файла)
 
+
+//// Приложение
+#let appendix(
+  title,
+  tag: none,
+  body,
+) = {
+  pagebreak(weak: true)
+  _appendix-counter.step()
+  context {
+    let number-value = _appendix-counter.get().first()
+    let letter = _appendix-letter(number-value)
+
+    _appendix-state.update(letter)
+    _image-counter.update(0)
+    _table-counter.update(0)
+    counter(figure.where(kind: image)).update(0)
+    counter(math.equation).update(0)
+    set math.equation(numbering: _appendix-equation-numbering(letter))
+
+    // Для содержания
+    {
+      show heading.where(level: 1): it => []
+      heading(level: 1, numbering: none)[Приложение #letter #title]
+      [#metadata((kind: "vvsu-appendix", number: letter))#if tag != none { tag }]
+    }
+
+    block(width: 100%, below: 18pt)[
+      #set par(
+        first-line-indent: 0pt,
+        leading: _msword-leading(1.5),
+        spacing: 0pt,
+        justify: false,
+      )
+      #align(center)[
+        #text(font: "Arial", size: 14pt, weight: "regular", hyphenate: false)[Приложение #letter\ #title]
+      ]
+    ]
+
+    body
+    _appendix-state.update(none)
+  }
+}
+
+
+
+//// Список использованных источников (на основе .bib-файла)
 // Простой парсер BibTeX: поддерживает записи вида
 // @type{key, field = {value}, field = {value}, }
 // Строки, начинающиеся с "%" (комментарии BibTeX), игнорируются
