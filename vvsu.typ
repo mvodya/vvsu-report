@@ -56,6 +56,74 @@
   #text(size: 10pt)[Источник: #body]
 ]
 
+// Нумерация для таблиц
+#let _table-counter = counter("vvsu-table")
+
+// Таблица
+#let figure-table(
+  caption,
+  tag: none,
+  source: none,
+  breakable: true,
+  body,
+) = context {
+  let number-value = _table-counter.get().first() + 1
+  let number = numbering("1", number-value)
+  let start-label = label("vvsu-table-start-" + str(number-value))
+
+  block(above: 12pt + 6pt, below: 12pt + 6pt, breakable: breakable)[
+    #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
+    // Обновляем счетчик и добавляем метаданные для ссылок
+    #_table-counter.update(number-value)
+    #metadata((kind: "vvsu-table", number: number))
+    #if tag != none { tag }
+    // Метка начала нужна для определения страниц продолжений
+    #metadata(none) #start-label
+    #block(sticky: true)[
+      Таблица #number – #caption
+      #v(4pt)
+    ]
+    #align(center)[
+      #set text(size: 10pt)
+      #body
+    ]
+    // Метаданные конца нужны для определения последней страницы таблицы
+    #metadata((kind: "vvsu-table-range", number: number, number-value: number-value)) #label("vvsu-table-end-" + str(number-value))
+    #if source != none {
+      align(left)[
+        #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
+        #v(6pt)
+        #text(size: 10pt)[Источник: #source]
+      ]
+    }
+  ]
+}
+
+// Шапка таблицы
+#let table-header(
+  columns-count,
+  ..children,
+) = table.header(
+  table.cell(colspan: columns-count, inset: 0pt, align: left, stroke: none)[
+    #context {
+      let number-value = _table-counter.get().first()
+      let number = numbering("1", number-value)
+      let start-label = label("vvsu-table-start-" + str(number-value))
+      let end-label = label("vvsu-table-end-" + str(number-value))
+      let current-page = counter(page).get().first()
+      let start-page = counter(page).at(query(start-label).first().location()).first()
+      let end-page = counter(page).at(query(end-label).first().location()).first()
+      if current-page == start-page {
+        []
+      } else if current-page == end-page {
+        [#text(size: 12pt)[Окончание таблицы #number]#v(4pt)]
+      } else {
+        [#text(size: 12pt)[Продолжение таблицы #number]#v(4pt)]
+      }
+    }
+  ],
+  ..children,
+)
 
 
 //// Оформление документа
@@ -182,6 +250,9 @@
         let number = numbering(it.element.numbering, ..it.element.counter.at(it.element.location()))
         link(it.target)[#number]
       }
+    } else if it.element != none and it.element.func() == metadata and type(it.element.value) == dictionary and "kind" in it.element.value and it.element.value.kind == "vvsu-table" {
+      // Ссылки на таблицы
+      link(it.target)[#it.element.value.number]
     } else {
       // Прочее
       it
