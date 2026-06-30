@@ -117,7 +117,7 @@
     let style = if it.level == 1 {
       (font: "Arial", size: 14pt, weight: "regular", before: 0pt, after: 12pt + 6pt)
     } else if it.level == 2 {
-      (font: "Arial", size: 13pt, weight: "regular", before: 12pt, after: 6pt + 6pt)
+      (font: "Arial", size: 13pt, weight: "regular", before: 12pt + 6pt, after: 6pt + 6pt)
     } else {
       (font: "Times New Roman", size: 12pt, weight: "bold", before: 12pt + 2pt, after: 12pt)
     }
