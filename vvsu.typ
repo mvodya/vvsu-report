@@ -6,7 +6,7 @@
 // Основано на СК-СТО-ТР-04-1.005-2015
 //
 // Vladivostok State University
-// Mark Vodyanitskiy (@mvodya) 2026
+// Mark Vodyanitskiy (@mvodya), Arkadiy Schneider (@thebandik) 2026
 
 #let template-name = "vvsu-report"
 #let template-version = version(6, 0)
@@ -28,12 +28,38 @@
 // Название кафедры для шапки
 // ИИТАД ИТС:
 #let vvsu-depart-its = [Институт информационных технологий и анализа данных\
-Кафедра информационных технологий и систем]
+  Кафедра информационных технологий и систем]
 
 // Буквенный список
 #let enum-alpha(body) = {
   let numbering-alpha(n) = {
-    let letters = ("а", "б", "в", "д", "е", "ж", "и", "к", "л", "м", "н", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "э", "ю", "я")
+    let letters = (
+      "а",
+      "б",
+      "в",
+      "д",
+      "е",
+      "ж",
+      "и",
+      "к",
+      "л",
+      "м",
+      "н",
+      "п",
+      "р",
+      "с",
+      "т",
+      "у",
+      "ф",
+      "х",
+      "ц",
+      "ч",
+      "ш",
+      "щ",
+      "э",
+      "ю",
+      "я",
+    )
     if n < 1 or n > letters.len() {
       panic("Не хватает букв для нумерации списка")
     }
@@ -55,6 +81,34 @@
   #v(6pt)
   #text(size: 10pt)[Источник: #body]
 ]
+
+// Расшифровка формулы (после "где", каждый символ – с новой строки)
+// items: массив content вида [$x$ – значение икс] без завершающей пунктуации
+#let decoding(items) = context {
+  let prefix-width = measure([где]).width
+  set par(first-line-indent: 0pt, leading: _msword-leading(1.5))
+  grid(
+    columns: (prefix-width, 1fr),
+    column-gutter: 0.3em,
+    row-gutter: _msword-leading(1.5),
+    ..items
+      .enumerate()
+      .map(((i, item)) => {
+        let label = if i == 0 { [где] } else { [] }
+        let punct = if i == items.len() - 1 { [.] } else { [;] }
+        (label, item + punct)
+      })
+      .flatten()
+  )
+}
+
+// Ссылка на формулу в тексте (обязательна, в скобках: «…в формуле (1)»)
+#let eq-ref(eq-label) = [в формуле #ref(eq-label)]
+
+// Пример использования одной величины в тексте (поясняется одна величина)
+#let inline-value(name, symbol, unit, description) = {
+  [#name #symbol, #unit, #description]
+}
 
 
 
@@ -111,7 +165,7 @@
         font: style.font,
         size: style.size,
         weight: style.weight,
-        hyphenate: false
+        hyphenate: false,
       )[
         #context {
           // Расчет размера нумерации для выравнивания переноса
@@ -149,8 +203,7 @@
       }
       grid(
         columns: (1.25cm, 1fr),
-        marker,
-        body,
+        marker, body,
       )
     }
   }
@@ -174,12 +227,36 @@
     ]
   ]
 
+  // Формулы
+  // Настройка нумерации формул (сквозная по работе)
+  set math.equation(
+    numbering: "(1)",
+    number-align: bottom + right,
+  )
+
+  // Показ формул с правильным расположением:
+  // отдельной строкой по центру, по одной свободной строке выше и ниже
+  show math.equation.where(block: true): it => {
+    block(
+      above: 12pt + 6pt,
+      below: 12pt + 6pt,
+      breakable: false,
+      it,
+    )
+  }
+
   // Настройка ссылок на элементы
   show ref: it => {
     if it.element != none and it.element.func() == figure and it.element.kind == image {
       // Ссылки на изображения
       context {
         let number = numbering(it.element.numbering, ..it.element.counter.at(it.element.location()))
+        link(it.target)[#number]
+      }
+    } else if it.element != none and it.element.func() == math.equation {
+      // Ссылки на формулы – только номер в скобках
+      context {
+        let number = numbering(it.element.numbering, ..counter(math.equation).at(it.element.location()))
         link(it.target)[#number]
       }
     } else {
@@ -242,7 +319,9 @@
         block()[
           #let title = if type(stamp) == dictionary and "title" in stamp { stamp.title } else { [Рекомендовано] }
           #let title2 = if type(stamp) == dictionary and "title2" in stamp { stamp.title2 } else { [к защите] }
-          #let role = if type(stamp) == dictionary and "role" in stamp { stamp.role } else { [Должность\ рекомендующего] }
+          #let role = if type(stamp) == dictionary and "role" in stamp { stamp.role } else {
+            [Должность\ рекомендующего]
+          }
           #let name = if type(stamp) == dictionary and "name" in stamp { stamp.name } else { [А.И. Рекомендатор] }
           #align(center)[
             #set par(leading: _msword-leading(1.5))
@@ -254,8 +333,7 @@
               columns: (5em, auto),
               column-gutter: 0.4em,
               align: bottom,
-              line(length: 100%),
-              name
+              line(length: 100%), name,
             )
           ]
         ]
@@ -303,7 +381,7 @@
   v(1fr)
   // Реквизиты 9-14 (авторы)
   block[
-    #set par(leading: _msword-leading(1),spacing: _msword-leading(1.5))
+    #set par(leading: _msword-leading(1), spacing: _msword-leading(1.5))
     #table(
       columns: (auto, 1fr, auto),
       inset: 0pt,
@@ -311,11 +389,13 @@
       align: bottom,
       column-gutter: 1em,
       row-gutter: 1em,
-      ..authors.map(author => {
-        let role = if type(author) == dictionary and "role" in author { author.role } else { [] }
-        let name = if type(author) == dictionary and "name" in author { author.name } else { [] }
-        ([#role], [#line(length: 100%)], [#name])
-      }).flatten(),
+      ..authors
+        .map(author => {
+          let role = if type(author) == dictionary and "role" in author { author.role } else { [] }
+          let name = if type(author) == dictionary and "name" in author { author.name } else { [] }
+          ([#role], [#line(length: 100%)], [#name])
+        })
+        .flatten(),
     )
   ]
   v(1fr)
@@ -329,7 +409,7 @@
 // Задание, Аннотация, Реферат
 #let front-matter-page(
   title: none,
-  body
+  body,
 ) = context {
   // Сохраняем страницу для пропуска нумерации
   let saved-page = counter(page).get().first()
@@ -368,7 +448,7 @@
 // Введение, Заключение
 #let outline-page(
   title: none,
-  body
+  body,
 ) = context {
   // На новой странице
   pagebreak(weak: true)
@@ -431,7 +511,7 @@
   show outline.entry: it => {
     let level = it.level
     // Расчет отступа в зависимости от уровня заголовка
-    let indent =  1.25cm * (level - 1)
+    let indent = 1.25cm * (level - 1)
     let number = if it.element.numbering == none {
       []
     } else {
