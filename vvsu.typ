@@ -134,6 +134,8 @@
   #align(center)[#body]
   #if source != none {
     figure-source(source)
+  } else {
+    v(6pt)
   }
   #align(center)[Рисунок #number – #caption]
 ]
