@@ -49,6 +49,13 @@
   body
 }
 
+// Источник для рисунка
+#let figure-source(body) = align(left)[
+  #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
+  #v(6pt)
+  #text(size: 10pt)[Источник: #body]
+]
+
 
 
 //// Оформление документа
@@ -80,33 +87,6 @@
 
   // Настройка нумерации заголовков
   set heading(numbering: "1.1.1")
-
-  // Списки
-  set list(marker: ([–], [–], [–]), indent: 0pt, body-indent: 0pt, spacing: 0pt)
-  set enum(numbering: "1)", indent: 0pt, body-indent: 0pt, spacing: 0pt)
-  let list-render(kind, level: 1, items) = {
-    if level > 3 {
-      panic("Разрешены только списки 1, 2 и 3 уровней")
-    }
-    for (i, item) in items.children.enumerate() {
-      let marker = if kind == "enum" {
-        if type(items.numbering) == function { (items.numbering)(i + 1) } else { numbering(items.numbering, i + 1) }
-      } else { [–] }
-      let body = {
-        set par(first-line-indent: 0pt)
-        show list: it => list-render("list", level: level + 1, it)
-        show enum: it => list-render("enum", level: level + 1, it)
-        item.body
-      }
-      grid(
-        columns: (1.25cm, 1fr),
-        marker,
-        body,
-      )
-    }
-  }
-  show list: it => list-render("list", it)
-  show enum: it => list-render("enum", it)
 
   // Заголовоки
   show heading: it => {
@@ -148,6 +128,64 @@
         }
       ]
     ]
+  }
+
+  // Списки
+  set list(marker: ([–], [–], [–]), indent: 0pt, body-indent: 0pt, spacing: 0pt)
+  set enum(numbering: "1)", indent: 0pt, body-indent: 0pt, spacing: 0pt)
+  let list-render(kind, level: 1, items) = {
+    if level > 3 {
+      panic("Разрешены только списки 1, 2 и 3 уровней")
+    }
+    for (i, item) in items.children.enumerate() {
+      let marker = if kind == "enum" {
+        if type(items.numbering) == function { (items.numbering)(i + 1) } else { numbering(items.numbering, i + 1) }
+      } else { [–] }
+      let body = {
+        set par(first-line-indent: 0pt)
+        show list: it => list-render("list", level: level + 1, it)
+        show enum: it => list-render("enum", level: level + 1, it)
+        item.body
+      }
+      grid(
+        columns: (1.25cm, 1fr),
+        marker,
+        body,
+      )
+    }
+  }
+  show list: it => list-render("list", it)
+  show enum: it => list-render("enum", it)
+
+  // Рисунки
+  set figure(numbering: "1", supplement: [Рисунок], gap: 0pt)
+  show figure.where(kind: image): it => block(above: 12pt + 6pt, below: 12pt + 6pt, breakable: false)[
+    #if it.caption == none {
+      panic("У рисунка должна быть подпись")
+    }
+    #align(center)[
+      #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
+      #it.body
+    ]
+    #v(6pt)
+    #align(center)[
+      #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
+      Рисунок #it.counter.display(it.numbering) – #it.caption.body
+    ]
+  ]
+
+  // Настройка ссылок на элементы
+  show ref: it => {
+    if it.element != none and it.element.func() == figure and it.element.kind == image {
+      // Ссылки на изображения
+      context {
+        let number = numbering(it.element.numbering, ..it.element.counter.at(it.element.location()))
+        link(it.target)[#number]
+      }
+    } else {
+      // Прочее
+      it
+    }
   }
 
   body
