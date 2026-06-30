@@ -204,9 +204,6 @@
   )
 }
 
-// Ссылка на формулу в тексте (обязательна, в скобках: «…в формуле (1)»)
-#let eq-ref(eq-label) = [в формуле #ref(eq-label)]
-
 // Пример использования одной величины в тексте (поясняется одна величина)
 #let inline-value(name, symbol, unit, description) = {
   [#name #symbol, #unit, #description]
@@ -353,11 +350,14 @@
       // Ссылки на таблицы
       link(it.target)[#it.element.value.number]
     } else if it.element != none and it.element.func() == math.equation {
-      // Ссылки на формулы – только номер в скобках
+      // Ссылки на формулы
       context {
         let number = numbering(it.element.numbering, ..counter(math.equation).at(it.element.location()))
         link(it.target)[#number]
       }
+    } else if it.element != none and it.element.func() == metadata and type(it.element.value) == dictionary and "kind" in it.element.value and it.element.value.kind == "vvsu-source" {
+      // Ссылки на источники
+      link(it.target)[#it.element.value.number]
     } else {
       // Прочее
       it
@@ -592,7 +592,6 @@
     // Значение поля – допускается один уровень вложенных {} (например {REST API} для защиты регистра)
     for fm in raw.matches(regex("(\w+)\s*=\s*\{((?:[^{}]|\{[^{}]*\})*)\}")) {
       let value = fm.captures.at(1).trim()
-      // Скобки-протекторы регистра в значении не выводятся
       value = value.replace(regex("\{([^{}]*)\}"), m => m.captures.at(0))
       fields.insert(lower(fm.captures.at(0)), value)
     }
@@ -625,10 +624,8 @@
 #let _bib-dash(s) = s.replace("--", "–")
 
 // Книга: Фамилия, И.О. Название : подзаголовок / И.О. Фамилия. – Город : Издательство, год. – с. с.
-// Город, издательство и год – необязательны по отдельности (пропускаются, если не заданы в .bib)
 #let _fmt-bib-book(f) = {
   let authors = _bib-authors(f)
-  // Под именем автора – если 1–2 автора, при 3 и более – сразу под заглавием
   let lead = if authors.len() in (1, 2) { authors.at(0) + " " } else { "" }
   let title = f.at("title", default: "")
   let subtitle = f.at("subtitle", default: none)
@@ -697,54 +694,21 @@
   }
 }
 
-// Форматирование записи источника по ГОСТ в зависимости от @type{...}
+// Форматирование записи источника в зависимости от @type{...}
 #let _fmt-bib-entry(f) = {
   if f.type == "book" { _fmt-bib-book(f) }
   else if f.type == "article" { _fmt-bib-article(f) }
   else { _fmt-bib-misc(f) }
 }
 
-// Метка-маркер упоминания источника в тексте (для query)
-#let _cite-marker = <vvsu-cite>
-
-// Порядок ключей по первому упоминанию в тексте (вычисляется из всех маркеров документа)
-#let _cite-order() = {
-  let order = ()
-  for it in query(_cite-marker) {
-    if it.value not in order {
-      order += (it.value,)
-    }
-  }
-  order
-}
-
-// Метка записи источника в списке (для кликабельной ссылки)
-#let _ref-label(key) = label("vvsu-ref-" + key)
-
-// Ссылка на источник в тексте: «…технологии [1]» – кликабельна, ведет на запись в списке
-// key – метка источника, например #cite-ref(<ivanov2024>)
-// Нумерация – по порядку первого упоминания в тексте
-#let cite-ref(key) = {
-  let key = str(key)
-  [#metadata(key)#_cite-marker]
-  context {
-    let order = _cite-order()
-    link(_ref-label(key))[[#(order.position(k => k == key) + 1)]]
-  }
-}
-
-// Список использованных источников (выводится в порядке упоминания в тексте)
-// sources – словарь, полученный через #read-sources("sources.bib")
+// Список использованных источников
 #let references(sources) = context {
-  let order = _cite-order()
   outline-page(title: [Список использованных источников])[
     #set text(size: 12pt)
-    #for (i, key) in order.enumerate() {
+    #for (i, key) in sources.keys().enumerate() {
       if i > 0 { parbreak() }
-      if key not in sources {
-        panic("Источник «" + key + "» упомянут в тексте, но отсутствует в списке источников (.bib)")
-      }
-      [#(i + 1) #_fmt-bib-entry(sources.at(key))#_ref-label(key)]
+      let source = sources.at(key)
+      [#(i + 1) #_fmt-bib-entry(source)#metadata((kind: "vvsu-source", number: "[" + str(i + 1) + "]"))#label(key)]
     }
   ]
 }
