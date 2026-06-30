@@ -56,6 +56,39 @@
   #text(size: 10pt)[Источник: #body]
 ]
 
+// Нумерация для рисунков
+#let _image-counter = counter("vvsu-image")
+
+// Оформление рисунка
+#let _image-block(number, caption, source: none, body) = block(above: 12pt + 6pt, below: 12pt + 6pt, breakable: false)[
+  #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
+  #align(center)[#body]
+  #v(6pt)
+  #align(center)[Рисунок #number – #caption]
+  #if source != none {
+    figure-source(source)
+  }
+]
+
+// Рисунок
+#let figure-image(
+  caption,
+  tag: none,
+  source: none,
+  body,
+) = context {
+  let number-value = _image-counter.get().first() + 1
+  let number = numbering("1", number-value)
+
+  _image-block(number, caption, source: source)[
+    // Обновляем счетчик и добавляем метаданные для ссылок
+    #_image-counter.update(number-value)
+    #metadata((kind: "vvsu-image", number: number))
+    #if tag != none { tag }
+    #body
+  ]
+}
+
 // Нумерация для таблиц
 #let _table-counter = counter("vvsu-table")
 
@@ -227,25 +260,20 @@
 
   // Рисунки
   set figure(numbering: "1", supplement: [Рисунок], gap: 0pt)
-  show figure.where(kind: image): it => block(above: 12pt + 6pt, below: 12pt + 6pt, breakable: false)[
-    #if it.caption == none {
+  show figure.where(kind: image): it => {
+    if it.caption == none {
       panic("У рисунка должна быть подпись")
     }
-    #align(center)[
-      #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
-      #it.body
-    ]
-    #v(6pt)
-    #align(center)[
-      #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
-      Рисунок #it.counter.display(it.numbering) – #it.caption.body
-    ]
-  ]
+    _image-block(it.counter.display(it.numbering), it.caption.body, body: it.body)
+  }
 
   // Настройка ссылок на элементы
   show ref: it => {
-    if it.element != none and it.element.func() == figure and it.element.kind == image {
-      // Ссылки на изображения
+    if it.element != none and it.element.func() == metadata and type(it.element.value) == dictionary and "kind" in it.element.value and it.element.value.kind == "vvsu-image" {
+      // Ссылки на рисунки
+      link(it.target)[#it.element.value.number]
+    } else if it.element != none and it.element.func() == figure and it.element.kind == image {
+      // Ссылки на рисунки (ванильный figure)
       context {
         let number = numbering(it.element.numbering, ..it.element.counter.at(it.element.location()))
         link(it.target)[#number]

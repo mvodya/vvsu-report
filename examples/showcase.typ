@@ -144,36 +144,40 @@
 
 Условная схема обработки заявки представлена на рисунке @fig:request-flow. В примере вместо изображения используется прямоугольный блок-заглушка.
 
-#figure(
+#figure-image(
+  [Небольшая подпись, описывающая что за рисунок],
+  tag: <fig:request-flow>,
+)[
   // image("assets/demo.png", width: 100%)
-  block(width: 100%, height: 45mm, stroke: 0.6pt + gray)[
+  #block(width: 100%, height: 45mm, stroke: 0.6pt + gray)[
     #align(center + horizon)[Место для рисунка 1]
-  ],
-  caption: [Небольшая подпись, описывающая что за рисунок],
-)<fig:request-flow>
+  ]
+]
 
 После рисунка размещается поясняющий текст. Он нужен для проверки интервалов вокруг рисунка, подписи и возврата к обычному оформлению абзацев. Пример с длинной подписью приведен на рисунке @fig:long-caption.
 
-#figure(
+#figure-image(
+  [Очень большая подпись, которая не помещается по каким-то причинам в одну строчку и возникает перенос],
+  tag: <fig:long-caption>,
+)[
   // image("assets/demo.png", width: 100%)
-  block(width: 100%, height: 45mm, stroke: 0.6pt + gray)[
+  #block(width: 100%, height: 45mm, stroke: 0.6pt + gray)[
     #align(center + horizon)[Место для рисунка 2]
-  ],
-  caption: [Очень большая подпись, которая не помещается по каким-то причинам в одну строчку и возникает перенос],
-)<fig:long-caption>
+  ]
+]
 
 Еще один вариант оформления показывает рисунок с источником, приведенный на рисунке @fig:with-source.
 
-#figure(
+#figure-image(
+  [У этого рисунка есть источник],
+  tag: <fig:with-source>,
+  source: [[5]],
+)[
   // image("assets/demo.png", width: 100%)
-  [
-    #block(width: 100%, height: 45mm, stroke: 0.6pt + gray)[
-      #align(center + horizon)[Место для рисунка 3]
-    ]
-    #figure-source[[5]]
-  ],
-  caption: [У этого рисунка есть источник],
-)<fig:with-source>
+  #block(width: 100%, height: 45mm, stroke: 0.6pt + gray)[
+    #align(center + horizon)[Место для рисунка 3]
+  ]
+]
 
 == Таблицы
 
