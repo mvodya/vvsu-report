@@ -476,6 +476,180 @@
 // Заключение
 #let conclusion(body) = outline-page(title: [Заключение])[#body]
 
+//// Список использованных источников (на основе .bib-файла)
+
+// Простой парсер BibTeX: поддерживает записи вида
+// @type{key, field = {value}, field = {value}, }
+// Строки, начинающиеся с "%" (комментарии BibTeX), игнорируются
+#let _parse-bib(text) = {
+  let text = text.split("\n").filter(line => not line.trim().starts-with("%")).join("\n")
+  let entries = (:)
+  for raw in text.split("@").slice(1) {
+    let header = raw.match(regex("^(\w+)\s*\{\s*([^,]+),"))
+    if header == none { continue }
+    let entry-type = lower(header.captures.at(0))
+    let key = header.captures.at(1).trim()
+    let fields = (:)
+    // Значение поля – допускается один уровень вложенных {} (например {REST API} для защиты регистра)
+    for fm in raw.matches(regex("(\w+)\s*=\s*\{((?:[^{}]|\{[^{}]*\})*)\}")) {
+      let value = fm.captures.at(1).trim()
+      // Скобки-протекторы регистра в значении не выводятся
+      value = value.replace(regex("\{([^{}]*)\}"), m => m.captures.at(0))
+      fields.insert(lower(fm.captures.at(0)), value)
+    }
+    fields.insert("type", entry-type)
+    fields.insert("key", key)
+    entries.insert(key, fields)
+  }
+  entries
+}
+
+// Загрузка и разбор .bib-файла с источниками
+// Пример: #let sources = read-sources("sources.bib")
+#let read-sources(path) = _parse-bib(read(path))
+
+// "Фамилия, И. О." -> "И. О. Фамилия"
+#let _swap-name(name) = {
+  let parts = name.split(",")
+  if parts.len() != 2 { name } else {
+    parts.at(1).trim() + " " + parts.at(0).trim()
+  }
+}
+
+// Список авторов записи (поле author, авторы разделены "and")
+#let _bib-authors(f) = {
+  let raw = f.at("author", default: none)
+  if raw in (none, "") { () } else { raw.split(" and ").map(a => a.trim()) }
+}
+
+// "12--18" -> "12–18"
+#let _bib-dash(s) = s.replace("--", "–")
+
+// Книга: Фамилия, И.О. Название : подзаголовок / И.О. Фамилия. – Город : Издательство, год. – с. с.
+// Город, издательство и год – необязательны по отдельности (пропускаются, если не заданы в .bib)
+#let _fmt-bib-book(f) = {
+  let authors = _bib-authors(f)
+  // Под именем автора – если 1–2 автора, при 3 и более – сразу под заглавием
+  let lead = if authors.len() in (1, 2) { authors.at(0) + " " } else { "" }
+  let title = f.at("title", default: "")
+  let subtitle = f.at("subtitle", default: none)
+  let title-part = title + (if subtitle not in (none, "") { " : " + subtitle } else { "" })
+  let by = if authors.len() > 0 { " / " + authors.map(_swap-name).join(", ") } else { "" }
+  let address = f.at("address", default: none)
+  let publisher = f.at("publisher", default: none)
+  let year = f.at("year", default: none)
+  let pages = f.at("pages", default: none)
+
+  let loc-pub = (
+    if address not in (none, "") { (address,) } else { () }
+      + if publisher not in (none, "") { (publisher,) } else { () }
+  ).join(" : ", default: "")
+  let imprint = (
+    if loc-pub != "" { (loc-pub,) } else { () }
+      + if year not in (none, "") { (year,) } else { () }
+  ).join(", ", default: "")
+
+  let out = lead + title-part + by + "."
+  if imprint != "" { out += " – " + imprint + "." }
+  if pages not in (none, "") { out += " – " + _bib-dash(pages) + " с." }
+  out
+}
+
+// Статья: Фамилия, И.О. Название [/ соавторы] // Журнал. – год. – Т. N, № N. – С. с.
+#let _fmt-bib-article(f) = {
+  let authors = _bib-authors(f)
+  let lead = if authors.len() == 1 { authors.at(0) + " " } else { "" }
+  let title = f.at("title", default: "")
+  let journal = f.at("journal", default: none)
+  let year = f.at("year", default: none)
+  let volume = f.at("volume", default: none)
+  let number = f.at("number", default: none)
+  let pages = f.at("pages", default: none)
+  let by = if authors.len() > 1 { " / " + authors.map(_swap-name).join(", ") } else { "" }
+  let out = lead + title + by
+  if journal not in (none, "") { out += " // " + journal }
+  out += "."
+  if year not in (none, "") { out += " – " + year + "." }
+  if volume not in (none, "") {
+    out += " – Т. " + volume
+    if number not in (none, "") { out += ", № " + number }
+    out += "."
+  } else if number not in (none, "") {
+    out += " – № " + number + "."
+  }
+  if pages not in (none, "") { out += " – С. " + _bib-dash(pages) + "." }
+  out
+}
+
+// Электронный ресурс / стандарт / прочее: используется howpublished (или url), либо note целиком
+#let _fmt-bib-misc(f) = {
+  let title = f.at("title", default: none)
+  let url = f.at("howpublished", default: f.at("url", default: none))
+  let note = f.at("note", default: none)
+  if title in (none, "") and url in (none, "") and note in (none, "") {
+    panic("Источник «" + f.at("key", default: "?") + "» не содержит данных (нужно поле title, note или howpublished/url)")
+  }
+  if url not in (none, "") {
+    title + " [Электронный ресурс]. – Режим доступа: " + url + (if note not in (none, "") { " (" + note + ")" } else { "" }) + "."
+  } else if note not in (none, "") {
+    note
+  } else {
+    title
+  }
+}
+
+// Форматирование записи источника по ГОСТ в зависимости от @type{...}
+#let _fmt-bib-entry(f) = {
+  if f.type == "book" { _fmt-bib-book(f) }
+  else if f.type == "article" { _fmt-bib-article(f) }
+  else { _fmt-bib-misc(f) }
+}
+
+// Метка-маркер упоминания источника в тексте (для query)
+#let _cite-marker = <vvsu-cite>
+
+// Порядок ключей по первому упоминанию в тексте (вычисляется из всех маркеров документа)
+#let _cite-order() = {
+  let order = ()
+  for it in query(_cite-marker) {
+    if it.value not in order {
+      order += (it.value,)
+    }
+  }
+  order
+}
+
+// Метка записи источника в списке (для кликабельной ссылки)
+#let _ref-label(key) = label("vvsu-ref-" + key)
+
+// Ссылка на источник в тексте: «…технологии [1]» – кликабельна, ведет на запись в списке
+// key – метка источника, например #cite-ref(<ivanov2024>)
+// Нумерация – по порядку первого упоминания в тексте
+#let cite-ref(key) = {
+  let key = str(key)
+  [#metadata(key)#_cite-marker]
+  context {
+    let order = _cite-order()
+    link(_ref-label(key))[[#(order.position(k => k == key) + 1)]]
+  }
+}
+
+// Список использованных источников (выводится в порядке упоминания в тексте)
+// sources – словарь, полученный через #read-sources("sources.bib")
+#let references(sources) = context {
+  let order = _cite-order()
+  outline-page(title: [Список использованных источников])[
+    #set text(size: 12pt)
+    #for (i, key) in order.enumerate() {
+      if i > 0 { parbreak() }
+      if key not in sources {
+        panic("Источник «" + key + "» упомянут в тексте, но отсутствует в списке источников (.bib)")
+      }
+      [#(i + 1) #_fmt-bib-entry(sources.at(key))#_ref-label(key)]
+    }
+  ]
+}
+
 
 
 //// Содержание
