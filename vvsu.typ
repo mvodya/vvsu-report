@@ -132,11 +132,10 @@
 #let _image-block(number, caption, source: none, body) = block(above: 12pt + 6pt, below: 12pt + 6pt, breakable: false)[
   #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
   #align(center)[#body]
-  #v(6pt)
-  #align(center)[Рисунок #number – #caption]
   #if source != none {
     figure-source(source)
   }
+  #align(center)[Рисунок #number – #caption]
 ]
 
 // Рисунок
@@ -193,7 +192,9 @@
       #body
     ]
     // Метаданные конца нужны для определения последней страницы таблицы
-    #metadata((kind: "vvsu-table-range", number: number, number-value: number-value)) #label("vvsu-table-end-" + str(range-value))
+    #metadata((kind: "vvsu-table-range", number: number, number-value: number-value)) #label(
+      "vvsu-table-end-" + str(range-value),
+    )
     #if source != none {
       align(left)[
         #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
@@ -387,17 +388,32 @@
 
   // Настройка ссылок на элементы
   show ref: it => {
-    if it.element != none and it.element.func() == metadata and type(it.element.value) == dictionary and "kind" in it.element.value and it.element.value.kind == "vvsu-image" {
+    if (
+      it.element != none
+        and it.element.func() == metadata
+        and type(it.element.value) == dictionary
+        and "kind" in it.element.value
+        and it.element.value.kind == "vvsu-image"
+    ) {
       // Ссылки на рисунки
       link(it.target)[#it.element.value.number]
     } else if it.element != none and it.element.func() == figure and it.element.kind == image {
       // Ссылки на рисунки (ванильный figure)
       context {
         let loc = it.element.location()
-        let number = _appendix-number(_appendix-state.at(loc), numbering(it.element.numbering, ..it.element.counter.at(loc)))
+        let number = _appendix-number(_appendix-state.at(loc), numbering(
+          it.element.numbering,
+          ..it.element.counter.at(loc),
+        ))
         link(it.target)[#number]
       }
-    } else if it.element != none and it.element.func() == metadata and type(it.element.value) == dictionary and "kind" in it.element.value and it.element.value.kind == "vvsu-table" {
+    } else if (
+      it.element != none
+        and it.element.func() == metadata
+        and type(it.element.value) == dictionary
+        and "kind" in it.element.value
+        and it.element.value.kind == "vvsu-table"
+    ) {
       // Ссылки на таблицы
       link(it.target)[#it.element.value.number]
     } else if it.element != none and it.element.func() == math.equation {
@@ -406,10 +422,22 @@
         let number = numbering(it.element.numbering, ..counter(math.equation).at(it.element.location()))
         link(it.target)[#number]
       }
-    } else if it.element != none and it.element.func() == metadata and type(it.element.value) == dictionary and "kind" in it.element.value and it.element.value.kind == "vvsu-source" {
+    } else if (
+      it.element != none
+        and it.element.func() == metadata
+        and type(it.element.value) == dictionary
+        and "kind" in it.element.value
+        and it.element.value.kind == "vvsu-source"
+    ) {
       // Ссылки на источники
       link(it.target)[#it.element.value.number]
-    } else if it.element != none and it.element.func() == metadata and type(it.element.value) == dictionary and "kind" in it.element.value and it.element.value.kind == "vvsu-appendix" {
+    } else if (
+      it.element != none
+        and it.element.func() == metadata
+        and type(it.element.value) == dictionary
+        and "kind" in it.element.value
+        and it.element.value.kind == "vvsu-appendix"
+    ) {
       // Ссылки на приложения
       link(it.target)[#it.element.value.number]
     } else {
@@ -741,8 +769,7 @@
       + if publisher not in (none, "") { (publisher,) } else { () }
   ).join(" : ", default: "")
   let imprint = (
-    if loc-pub != "" { (loc-pub,) } else { () }
-      + if year not in (none, "") { (year,) } else { () }
+    if loc-pub != "" { (loc-pub,) } else { () } + if year not in (none, "") { (year,) } else { () }
   ).join(", ", default: "")
 
   let out = lead + title-part + by + "."
@@ -783,10 +810,18 @@
   let url = f.at("howpublished", default: f.at("url", default: none))
   let note = f.at("note", default: none)
   if title in (none, "") and url in (none, "") and note in (none, "") {
-    panic("Источник «" + f.at("key", default: "?") + "» не содержит данных (нужно поле title, note или howpublished/url)")
+    panic(
+      "Источник «" + f.at("key", default: "?") + "» не содержит данных (нужно поле title, note или howpublished/url)",
+    )
   }
   if url not in (none, "") {
-    title + " [Электронный ресурс]. – Режим доступа: " + url + (if note not in (none, "") { " (" + note + ")" } else { "" }) + "."
+    (
+      title
+        + " [Электронный ресурс]. – Режим доступа: "
+        + url
+        + (if note not in (none, "") { " (" + note + ")" } else { "" })
+        + "."
+    )
   } else if note not in (none, "") {
     note
   } else {
@@ -796,9 +831,7 @@
 
 // Форматирование записи источника в зависимости от @type{...}
 #let _fmt-bib-entry(f) = {
-  if f.type == "book" { _fmt-bib-book(f) }
-  else if f.type == "article" { _fmt-bib-article(f) }
-  else { _fmt-bib-misc(f) }
+  if f.type == "book" { _fmt-bib-book(f) } else if f.type == "article" { _fmt-bib-article(f) } else { _fmt-bib-misc(f) }
 }
 
 // Список использованных источников
