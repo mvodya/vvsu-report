@@ -30,6 +30,25 @@
 #let vvsu-depart-its = [Институт информационных технологий и анализа данных\
 Кафедра информационных технологий и систем]
 
+// Буквенный список
+#let enum-alpha(body) = {
+  let numbering-alpha(n) = {
+    let letters = ("а", "б", "в", "д", "е", "ж", "и", "к", "л", "м", "н", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "э", "ю", "я")
+    if n < 1 or n > letters.len() {
+      panic("Не хватает букв для нумерации списка")
+    }
+    [#letters.at(n - 1))]
+  }
+  set enum(numbering: numbering-alpha)
+  body
+}
+
+// Цифровой список
+#let enum-num(body) = {
+  set enum(numbering: "1)")
+  body
+}
+
 
 
 //// Оформление документа
@@ -61,6 +80,33 @@
 
   // Настройка нумерации заголовков
   set heading(numbering: "1.1.1")
+
+  // Списки
+  set list(marker: ([–], [–], [–]), indent: 0pt, body-indent: 0pt, spacing: 0pt)
+  set enum(numbering: "1)", indent: 0pt, body-indent: 0pt, spacing: 0pt)
+  let list-render(kind, level: 1, items) = {
+    if level > 3 {
+      panic("Разрешены только списки 1, 2 и 3 уровней")
+    }
+    for (i, item) in items.children.enumerate() {
+      let marker = if kind == "enum" {
+        if type(items.numbering) == function { (items.numbering)(i + 1) } else { numbering(items.numbering, i + 1) }
+      } else { [–] }
+      let body = {
+        set par(first-line-indent: 0pt)
+        show list: it => list-render("list", level: level + 1, it)
+        show enum: it => list-render("enum", level: level + 1, it)
+        item.body
+      }
+      grid(
+        columns: (1.25cm, 1fr),
+        marker,
+        body,
+      )
+    }
+  }
+  show list: it => list-render("list", it)
+  show enum: it => list-render("enum", it)
 
   // Заголовоки
   show heading: it => {
@@ -236,7 +282,7 @@
   ]
   v(1fr)
   align(center)[Владивосток #year]
-  pagebreak()
+  pagebreak(weak: true)
 }
 
 
@@ -273,7 +319,7 @@
 
   body
 
-  pagebreak()
+  pagebreak(weak: true)
   // Восстанавливаем номер страницы для пропуска нумерации
   counter(page).update(saved-page)
 }
