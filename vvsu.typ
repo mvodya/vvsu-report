@@ -9,7 +9,7 @@
 // Mark Vodyanitskiy (@mvodya), Arkadiy Schneider (@thebandik) 2026
 
 #let template-name = "vvsu-report"
-#let template-version = version(6, 1)
+#let template-version = version(6, 2)
 
 #let minimum-typst-version = version(0, 14, 0)
 #assert(
@@ -617,7 +617,11 @@
     v(6pt)
   }
 
-  body
+  {
+    // Заголовки не входят в содержание и не нумеруются
+    set heading(numbering: (..numbers) => [], outlined: false)
+    body
+  }
 
   pagebreak(weak: true)
   // Восстанавливаем номер страницы для пропуска нумерации
@@ -698,7 +702,11 @@
       ]
     ]
 
-    body
+    {
+      // Заголовки не входят в содержание и не нумеруются
+      set heading(numbering: (..numbers) => [], outlined: false)
+      body
+    }
     _appendix-state.update(none)
   }
 }
