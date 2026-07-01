@@ -9,7 +9,7 @@
 // Mark Vodyanitskiy (@mvodya), Arkadiy Schneider (@thebandik) 2026
 
 #let template-name = "vvsu-report"
-#let template-version = version(6, 0)
+#let template-version = version(6, 1)
 
 #let minimum-typst-version = version(0, 14, 0)
 #assert(
@@ -484,10 +484,9 @@
     «#upper[Владивостокский Государственный Университет]»\
     (ФГБОУ ВО «ВВГУ»)\
 
-    #if not _is-empty(department) [
-      Институт информационных технологий и анализа данных\
-      Кафедра информационных технологий и систем
-    ]
+    #if not _is-empty(department) {
+      department
+    }
   ]
 
   // Реквизит 5
