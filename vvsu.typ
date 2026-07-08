@@ -9,7 +9,7 @@
 // Mark Vodyanitskiy (@mvodya), Arkadiy Schneider (@thebandik) 2026
 
 #let template-name = "vvsu-report"
-#let template-version = version(6, 2)
+#let template-version = version(6, 3)
 
 #let minimum-typst-version = version(0, 14, 0)
 #assert(
@@ -146,17 +146,19 @@
   tag: none,
   source: none,
   body,
-) = context {
-  let number-value = _image-counter.get().first() + 1
-  let number = _appendix-number(_appendix-state.get(), numbering("1", number-value))
+) = {
+  _image-counter.step()
+  context {
+    let number-value = _image-counter.get().first()
+    let number = _appendix-number(_appendix-state.get(), numbering("1", number-value))
 
-  _image-block(number, caption, source: source)[
-    // Обновляем счетчик и добавляем метаданные для ссылок
-    #_image-counter.update(number-value)
-    #metadata((kind: "vvsu-image", number: number))
-    #if tag != none { tag }
-    #body
-  ]
+    _image-block(number, caption, source: source)[
+      // Добавляем метаданные для ссылок
+      #metadata((kind: "vvsu-image", number: number))
+      #if tag != none { tag }
+      #body
+    ]
+  }
 }
 
 // Нумерация для таблиц
@@ -170,49 +172,50 @@
   source: none,
   breakable: true,
   body,
-) = context {
-  let number-value = _table-counter.get().first() + 1
-  let number = _appendix-number(_appendix-state.get(), numbering("1", number-value))
-  let range-value = _table-range-counter.get().first() + 1
-  let start-label = label("vvsu-table-start-" + str(range-value))
+) = {
+  _table-counter.step()
+  _table-range-counter.step()
+  context {
+    let number-value = _table-counter.get().first()
+    let number = _appendix-number(_appendix-state.get(), numbering("1", number-value))
+    let range-value = _table-range-counter.get().first()
+    let start-label = label("vvsu-table-start-" + str(range-value))
 
-  block(above: 12pt + 6pt, below: 12pt + 6pt, breakable: breakable)[
-    #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
-    // Обновляем счетчик и добавляем метаданные для ссылок
-    #_table-counter.update(number-value)
-    #_table-range-counter.update(range-value)
-    #metadata((kind: "vvsu-table", number: number))
-    #if tag != none { tag }
-    // Метка начала нужна для определения страниц продолжений
-    #metadata(none) #start-label
-    #block(sticky: true)[
-      Таблица #number – #caption
-      #v(4pt)
-    ]
-    #align(center)[
-      #set text(size: 10pt)
-      #body
-    ]
-    // Метаданные конца нужны для определения последней страницы таблицы
-    #metadata((kind: "vvsu-table-range", number: number, number-value: number-value)) #label(
-      "vvsu-table-end-" + str(range-value),
-    )
-    #if source != none {
-      align(left)[
-        #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
-        #v(6pt)
-        #text(size: 10pt)[Источник: #source]
+    block(above: 12pt + 6pt, below: 12pt + 6pt, breakable: breakable)[
+      #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
+      // Добавляем метаданные для ссылок
+      #metadata((kind: "vvsu-table", number: number))
+      #if tag != none { tag }
+      // Метка начала нужна для определения страниц продолжений
+      #metadata(none) #start-label
+      #block(sticky: true)[
+        Таблица #number – #caption
+        #v(4pt)
       ]
-    }
-  ]
+      #align(center)[
+        #set text(size: 10pt)
+        #body
+      ]
+      // Метаданные конца нужны для определения последней страницы таблицы
+      #metadata((kind: "vvsu-table-range", number: number, number-value: number-value)) #label(
+        "vvsu-table-end-" + str(range-value),
+      )
+      #if source != none {
+        align(left)[
+          #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
+          #v(6pt)
+          #text(size: 10pt)[Источник: #source]
+        ]
+      }
+    ]
+  }
 }
 
 // Шапка таблицы
 #let table-header(
-  columns-count,
   ..children,
 ) = table.header(
-  table.cell(colspan: columns-count, inset: 0pt, align: left, stroke: none)[
+  table.cell(colspan: children.pos().len(), inset: 0pt, align: left, stroke: none)[
     #context {
       let number-value = _table-counter.get().first()
       let number = _appendix-number(_appendix-state.get(), numbering("1", number-value))
