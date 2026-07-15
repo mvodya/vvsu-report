@@ -131,7 +131,7 @@
 // Оформление рисунка
 #let _image-block(number, caption, source: none, body) = block(above: 12pt + 6pt, below: 12pt + 6pt, breakable: false)[
   #set par(first-line-indent: 0pt, leading: _msword-leading(1), spacing: 0pt, justify: false)
-  #align(center)[#body]
+  #block(width: 100%)[#align(center)[#body]]
   #if source != none {
     figure-source(source)
   } else {
@@ -192,9 +192,11 @@
         Таблица #number – #caption
         #v(4pt)
       ]
-      #align(center)[
-        #set text(size: 10pt)
-        #body
+      #block(width: 100%)[
+        #align(center)[
+          #set text(size: 10pt)
+          #body
+        ]
       ]
       // Метаданные конца нужны для определения последней страницы таблицы
       #metadata((kind: "vvsu-table-range", number: number, number-value: number-value)) #label(
